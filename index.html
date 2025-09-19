@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Mirroring Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .description {
+            text-align: center;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+        
+        .connection-status {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 10px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4b2b;
+        }
+        
+        .status-indicator.connected {
+            background: #00b09b;
+            box-shadow: 0 0 10px #00b09b;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .start-btn {
+            background: linear-gradient(to right, #00b09b, #96c93d);
+            color: white;
+        }
+        
+        .start-btn:hover {
+            background: linear-gradient(to right, #96c93d, #00b09b);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 176, 155, 0.4);
+        }
+        
+        .stop-btn {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+        }
+        
+        .stop-btn:hover {
+            background: linear-gradient(to right, #ff4b2b, #ff416c);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 75, 43, 0.4);
+        }
+        
+        .copy-btn {
+            background: linear-gradient(to right, #1e3c72, #2a5298);
+            color: white;
+        }
+        
+        .copy-btn:hover {
+            background: linear-gradient(to right, #2a5298, #1e3c72);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(42, 82, 152, 0.4);
+        }
+        
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .video-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .video-wrapper {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            background: #000;
+            aspect-ratio: 16/9;
+        }
+        
+        .video-wrapper h3 {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+            z-index: 10;
+        }
+        
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+        }
+        
+        .connection-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        
+        .connection-info h2 {
+            margin-bottom: 1rem;
+            color: #00b09b;
+        }
+        
+        .peer-id-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        input {
+            flex-grow: 1;
+            padding: 0.8rem 1rem;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        input::placeholder {
+            color: #ccc;
+        }
+        
+        .instructions {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+        }
+        
+        .instructions h2 {
+            margin-bottom: 1rem;
+            color: #ffcc00;
+        }
+        
+        .instructions ol {
+            padding-left: 1.5rem;
+            line-height: 1.8;
+        }
+        
+        .instructions li {
+            margin-bottom: 0.8rem;
+        }
+        
+        .github-link {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .github-link a {
+            color: #ffcc00;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .github-link a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 900px) {
+            .video-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            button {
+                padding: 0.7rem 1.2rem;
+                font-size: 0.9rem;
+            }
+            
+            .peer-id-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Screen Mirroring Tool</h1>
+        <p class="description">Share your screen in real-time with others using WebRTC technology</p>
+        
+        <div class="connection-status">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <span id="statusText">Disconnected</span>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn" class="start-btn">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <circle cx="8" cy="8" r="6"></circle>
+                </svg>
+                Start Sharing
+            </button>
+            <button id="stopBtn" class="stop-btn" disabled>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <rect x="4" y="4" width="8" height="8"></rect>
+                </svg>
+                Stop Sharing
+            </button>
+        </div>
+        
+        <div class="video-container">
+            <div class="video-wrapper">
+                <h3>Your Screen</h3>
+                <video id="localVideo" autoplay muted></video>
+            </div>
+            <div class="video-wrapper">
+                <h3>Remote Screen</h3>
+                <video id="remoteVideo" autoplay></video>
+            </div>
+        </div>
+        
+        <div class="connection-info">
+            <h2>Connection Information</h2>
+            <div class="peer-id-container">
+                <input type="text" id="peerIdInput" placeholder="Enter peer ID to connect" />
+                <button id="connectBtn" class="start-btn">Connect</button>
+            </div>
+            <div class="peer-id-container">
+                <input type="text" id="yourIdInput" placeholder="Your ID will appear here" readonly />
+                <button id="copyBtn" class="copy-btn">Copy ID</button>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h2>How to use:</h2>
+            <ol>
+                <li>Click "Start Sharing" to begin screen sharing (your ID will be generated)</li>
+                <li>Share your ID with the person you want to mirror your screen to</li>
+                <li>The other person should enter your ID and click "Connect"</li>
+                <li>To view someone else's screen, enter their ID and click "Connect"</li>
+                <li>This tool works best in Chrome, Edge, and Firefox browsers</li>
+                <li>For best results, use this tool on a secure (HTTPS) connection</li>
+            </ol>
+        </div>
+        
+        <div class="github-link">
+            <a href="https://github.com" target="_blank">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0C3.58 0 0 3.58 0 8C0 11.54 2.29 14.53 5.47 15.59C5.87 15.66 6.02 15.42 6.02 15.21C6.02 15.02 6.01 14.39 6.01 13.72C4 14.09 3.48 13.23 3.32 12.78C3.23 12.55 2.84 11.84 2.5 11.65C2.22 11.5 1.82 11.13 2.49 11.12C3.12 11.11 3.57 11.7 3.72 11.94C4.44 13.15 5.59 12.81 6.05 12.6C6.12 12.08 6.33 11.73 6.56 11.53C4.78 11.33 2.92 10.64 2.92 7.58C2.92 6.71 3.23 5.99 3.74 5.43C3.66 5.23 3.38 4.41 3.82 3.31C3.82 3.31 4.49 3.1 6.02 4.13C6.66 3.95 7.34 3.86 8.02 3.86C8.7 3.86 9.38 3.95 10.02 4.13C11.55 3.09 12.22 3.31 12.22 3.31C12.66 4.41 12.38 5.23 12.3 5.43C12.81 5.99 13.12 6.7 13.12 7.58C13.12 10.65 11.25 11.33 9.47 11.53C9.76 11.78 10.01 12.26 10.01 13.01C10.01 14.08 10 14.94 10 15.21C10 15.42 10.15 15.67 10.55 15.59C13.71 14.53 16 11.53 16 8C16 3.58 12.42 0 8 0Z"></path>
+                </svg>
+                View on GitHub
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const connectBtn = document.getElementById('connectBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const peerIdInput = document.getElementById('peerIdInput');
+        const yourIdInput = document.getElementById('yourIdInput');
+        
+        // WebRTC variables
+        let localStream = null;
+        let peerConnection = null;
+        let peerId = null;
+        let socket = null;
+        let isAlreadyCalling = false;
+        
+        // Generate a random peer ID
+        function generatePeerId() {
+            return Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+        }
+        
+        // Initialize the application
+        function init() {
+            peerId = generatePeerId();
+            yourIdInput.value = peerId;
+            updateStatus('disconnected');
+        }
+        
+        // Update connection status
+        function updateStatus(status) {
+            statusIndicator.className = 'status-indicator';
+            switch(status) {
+                case 'disconnected':
+                    statusText.textContent = 'Disconnected';
+                    break;
+                case 'connecting':
+                    statusText.textContent = 'Connecting...';
+                    break;
+                case 'connected':
+                    statusIndicator.classList.add('connected');
+                    statusText.textContent = 'Connected';
+                    break;
+                case 'sharing':
+                    statusIndicator.classList.add('connected');
+                    statusText.textContent = 'Screen Sharing';
+                    break;
+            }
+        }
+        
+        // Start screen sharing
+        async function startSharing() {
+            try {
+                updateStatus('connecting');
+                
+                // Get screen stream
+                localStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: {
+                        cursor: "always",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: true
+                });
+                
+                // Display local stream
+                localVideo.srcObject = localStream;
+                
+                // Enable stop button
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                
+                updateStatus('sharing');
+                
+                // Simulate WebRTC connection (in a real implementation, you'd use a signaling server)
+                simulateWebRTCConnection();
+                
+            } catch (err) {
+                console.error('Error starting screen sharing:', err);
+                alert('Error starting screen sharing: ' + err.message);
+                updateStatus('disconnected');
+            }
+        }
+        
+        // Stop screen sharing
+        function stopSharing() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+                localVideo.srcObject = null;
+            }
+            
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            
+            updateStatus('disconnected');
+        }
+        
+        // Connect to another peer
+        function connectToPeer() {
+            const remotePeerId = peerIdInput.value.trim();
+            if (!remotePeerId) {
+                alert('Please enter a peer ID');
+                return;
+            }
+            
+            updateStatus('connecting');
+            
+            // Simulate connecting to another peer
+            setTimeout(() => {
+                updateStatus('connected');
+                alert('In a real implementation, this would connect to peer: ' + remotePeerId + '\n\nThis demo simulates the connection UI but does not establish actual P2P connections due to WebRTC complexity and signaling server requirements.');
+            }, 1500);
+        }
+        
+        // Simulate WebRTC connection (for demo purposes)
+        function simulateWebRTCConnection() {
+            // In a real implementation, this would set up a WebRTC peer connection
+            // and signaling through a server like Socket.io
+            console.log('Simulating WebRTC connection...');
+            
+            // This is where you would create the RTCPeerConnection, 
+            // add tracks, create offers/answers, and handle ICE candidates
+        }
+        
+        // Copy peer ID to clipboard
+        function copyPeerId() {
+            yourIdInput.select();
+            document.execCommand('copy');
+            alert('Peer ID copied to clipboard: ' + peerId);
+        }
+        
+        // Check if browser supports WebRTC
+        function checkWebRTCSupport() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+                alert('Your browser does not support screen sharing. Please use Chrome, Edge, or Firefox.');
+                startBtn.disabled = true;
+                return false;
+            }
+            
+            if (!window.RTCPeerConnection) {
+                alert('Your browser does not support WebRTC. Please use a modern browser.');
+                startBtn.disabled = true;
+                connectBtn.disabled = true;
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // Event listeners
+        startBtn.addEventListener('click', startSharing);
+        stopBtn.addEventListener('click', stopSharing);
+        connectBtn.addEventListener('click', connectToPeer);
+        copyBtn.addEventListener('click', copyPeerId);
+        
+        // Initialize the app
+        if (checkWebRTCSupport()) {
+            init();
+        }
+        
+        // Simulated remote video for demo purposes
+        setTimeout(() => {
+            // This is just for demonstration - in a real app, this would be the remote stream
+            remoteVideo.srcObject = null;
+            remoteVideo.poster = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgNDAwIDMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSIxMjAiIHk9IjE1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmaWxsPSIjNjY2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5SZW1vdGUgU2NyZWVuIFByZXZpZXc8L3RleHQ+PC9zdmc+';
+        }, 1000);
+    </script>
+</body>
+</html>
